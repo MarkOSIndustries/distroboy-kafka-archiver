@@ -1,0 +1,61 @@
+plugins {
+    id 'java'
+    id 'com.github.sherter.google-java-format' version '0.9'
+    id 'distribution'
+}
+
+group 'com.markosindustries.distroboy-kafka-archiver'
+version "${version_string}"
+
+compileJava.dependsOn verifyGoogleJavaFormat
+
+repositories {
+    mavenCentral()
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << '-Xlint:unchecked'
+    options.deprecation = true
+}
+
+dependencies {
+    implementation group: 'com.markosindustries.distroboy', name: 'core', version: distroboyVersion
+    implementation group: 'com.markosindustries.distroboy', name: 'kafka', version: distroboyVersion
+    implementation group: 'com.markosindustries.distroboy', name: 'aws-s3-parquet', version: distroboyVersion
+
+    implementation group: 'org.aeonbits.owner', name: 'owner', version: '1.0.12'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Class-Path': configurations.runtimeClasspath.collect { 'dependencies/' + it.getName() }.join(' '),
+                'Main-Class': 'com.markosindustries.distroboy.kafka.archiver.Main'
+        )
+    }
+}
+
+distributions {
+    main {
+        distributionBaseName = "distroboy-kafka-archiver"
+        contents {
+            into("") {
+                from jar.archiveFile
+            }
+            into("dependencies") {
+                from configurations.runtimeClasspath
+            }
+        }
+    }
+}
+
+googleJavaFormat {
+    toolVersion '1.9'
+}
+
+test {
+    useJUnitPlatform()
+}

@@ -1,0 +1,28 @@
+version: '3.4'
+services:
+  coordinator:
+    image: markosindustries/distroboy-coordinator:latest
+  kafka-archiver-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      COORDINATOR_HOST: 'coordinator'
+      USE_LOCALSTACK_FOR_S3: 'true'
+      S3_ENDPOINT_OVERRIDE: 'http://localstack:4566'
+      ARCHIVER_TOPICS: 'distroboy.example.topic1,distroboy.example.topic2'
+      ARCHIVER_START_TIMESTAMP_MS: 1641513600000
+      ARCHIVER_END_TIMESTAMP_MS: 1641686400000
+  kafka-archiver-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      COORDINATOR_HOST: 'coordinator'
+      USE_LOCALSTACK_FOR_S3: 'true'
+      S3_ENDPOINT_OVERRIDE: 'http://localstack:4566'
+      ARCHIVER_TOPICS: 'distroboy.example.topic1,distroboy.example.topic2'
+      ARCHIVER_START_TIMESTAMP_MS: 1641513600000
+      ARCHIVER_END_TIMESTAMP_MS: 1641686400000
