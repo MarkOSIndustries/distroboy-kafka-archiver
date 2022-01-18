@@ -73,7 +73,8 @@ public class Main {
                                   kafkaConsumer,
                                   topicPartitions,
                                   new TimestampKafkaOffsetSpec(archiverConfig.startTimestampMs()),
-                                  new TimestampKafkaOffsetSpec(archiverConfig.endTimestampMs()))))
+                                  new TimestampOrLatestKafkaOffsetSpec(
+                                      archiverConfig.endTimestampMs()))))
                   .map(ArchiveRecord::new)
                   .reduce(
                       new WriteToParquet<ArchiveRecord, Path>(

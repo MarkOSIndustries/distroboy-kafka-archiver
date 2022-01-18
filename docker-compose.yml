@@ -13,7 +13,7 @@ services:
       S3_ENDPOINT_OVERRIDE: 'http://localstack:4566'
       ARCHIVER_TOPICS: 'distroboy.example.topic1,distroboy.example.topic2'
       ARCHIVER_START_TIMESTAMP_MS: 1641513600000
-      ARCHIVER_END_TIMESTAMP_MS: 1641686400000
+      ARCHIVER_END_TIMESTAMP_MS: 1642492000000
   kafka-archiver-2:
     build:
       context: .
@@ -25,4 +25,4 @@ services:
       S3_ENDPOINT_OVERRIDE: 'http://localstack:4566'
       ARCHIVER_TOPICS: 'distroboy.example.topic1,distroboy.example.topic2'
       ARCHIVER_START_TIMESTAMP_MS: 1641513600000
-      ARCHIVER_END_TIMESTAMP_MS: 1641686400000
+      ARCHIVER_END_TIMESTAMP_MS: 1642492000000
