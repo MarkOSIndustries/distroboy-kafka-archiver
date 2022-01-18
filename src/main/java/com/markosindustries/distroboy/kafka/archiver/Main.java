@@ -104,8 +104,8 @@ public class Main {
                   .map(Object::toString)
                   .collect(Serialisers.stringValues))
           .onClusterLeader(
-              events -> {
-                log.info("There are {} events in the topic", events);
+              s3Keys -> {
+                log.info("Wrote events to S3 keys: {}", s3Keys);
               });
     }
   }
