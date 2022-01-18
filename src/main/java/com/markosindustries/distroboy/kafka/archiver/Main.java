@@ -17,7 +17,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.markosindustries.distroboy.core.Cluster;
 import com.markosindustries.distroboy.core.Logging;
-import com.markosindustries.distroboy.core.clustering.ClusterMemberId;
 import com.markosindustries.distroboy.core.clustering.serialisation.Serialisers;
 import com.markosindustries.distroboy.core.iterators.IteratorWithResources;
 import com.markosindustries.distroboy.core.operations.DistributedOpSequence;
@@ -89,7 +88,7 @@ public class Main {
                                           .resolve(Integer.toString(record.partition))
                                           .resolve(Long.toString(startOfDayUtc));
                                   Files.createDirectories(path);
-                                  return path.resolve(ClusterMemberId.self + ".parquet");
+                                  return path.resolve(cluster.clusterMemberId + ".parquet");
                                 } catch (IOException e) {
                                   throw new RuntimeException(e);
                                 }
