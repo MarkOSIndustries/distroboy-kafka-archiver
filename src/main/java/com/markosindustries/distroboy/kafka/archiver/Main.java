@@ -32,7 +32,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import org.aeonbits.owner.ConfigFactory;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.IsolationLevel;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.slf4j.Logger;
@@ -59,22 +58,21 @@ public class Main {
             .memberPort(distroBoyConfig.memberPort())
             .join()) {
 
-      final var kafkaConsumer = buildKafkaConsumer(kafkaConfig);
+      final var kafkaConsumerConfig = buildKafkaConfig(kafkaConfig);
       final var s3Client = buildS3Client(s3Config);
 
       cluster
           .execute(
               DistributedOpSequence.readFrom(
-                      new KafkaTopicPartitionsSource(kafkaConsumer, archiverConfig.topics()))
+                      new KafkaTopicPartitionsSource(kafkaConsumerConfig, archiverConfig.topics()))
                   .flatMap(
                       topicPartitions ->
-                          IteratorWithResources.from(
-                              new KafkaTopicPartitionsIterator<>(
-                                  kafkaConsumer,
-                                  topicPartitions,
-                                  new TimestampKafkaOffsetSpec(archiverConfig.startTimestampMs()),
-                                  new TimestampOrLatestKafkaOffsetSpec(
-                                      archiverConfig.endTimestampMs()))))
+                          new KafkaTopicPartitionsIterator<byte[], byte[]>(
+                              kafkaConsumerConfig,
+                              topicPartitions,
+                              new TimestampKafkaOffsetSpec(archiverConfig.startTimestampMs()),
+                              new TimestampOrLatestKafkaOffsetSpec(
+                                  archiverConfig.endTimestampMs())))
                   .map(ArchiveRecord::new)
                   .reduce(
                       new WriteToParquet<ArchiveRecord, Path>(
@@ -111,25 +109,22 @@ public class Main {
     }
   }
 
-  static KafkaConsumer<byte[], byte[]> buildKafkaConsumer(KafkaConfig kafkaConfig) {
-    final var kafkaConfigMap =
-        ImmutableMap.<String, Object>builder()
-            .put(BOOTSTRAP_SERVERS_CONFIG, kafkaConfig.kafkaBrokers())
-            .put(CLIENT_ID_CONFIG, "distroboy-kafka-archiver" + randomUUID())
-            .put(ENABLE_AUTO_COMMIT_CONFIG, false)
-            .put(MAX_POLL_RECORDS_CONFIG, 1000)
-            .put(SESSION_TIMEOUT_MS_CONFIG, 10 * 1000)
-            .put(HEARTBEAT_INTERVAL_MS_CONFIG, 3 * 1000)
-            .put(KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class)
-            .put(VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class)
-            .put(FETCH_MIN_BYTES_CONFIG, 1)
-            .put(FETCH_MAX_WAIT_MS_CONFIG, 500)
-            .put(
-                ISOLATION_LEVEL_CONFIG,
-                IsolationLevel.READ_COMMITTED.toString().toLowerCase(Locale.ROOT))
-            .build();
-
-    return new KafkaConsumer<byte[], byte[]>(kafkaConfigMap);
+  static ImmutableMap<String, Object> buildKafkaConfig(KafkaConfig kafkaConfig) {
+    return ImmutableMap.<String, Object>builder()
+        .put(BOOTSTRAP_SERVERS_CONFIG, kafkaConfig.kafkaBrokers())
+        .put(CLIENT_ID_CONFIG, "distroboy-kafka-archiver" + randomUUID())
+        .put(ENABLE_AUTO_COMMIT_CONFIG, false)
+        .put(MAX_POLL_RECORDS_CONFIG, 1000)
+        .put(SESSION_TIMEOUT_MS_CONFIG, 10 * 1000)
+        .put(HEARTBEAT_INTERVAL_MS_CONFIG, 3 * 1000)
+        .put(KEY_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class)
+        .put(VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class)
+        .put(FETCH_MIN_BYTES_CONFIG, 1)
+        .put(FETCH_MAX_WAIT_MS_CONFIG, 500)
+        .put(
+            ISOLATION_LEVEL_CONFIG,
+            IsolationLevel.READ_COMMITTED.toString().toLowerCase(Locale.ROOT))
+        .build();
   }
 
   static S3Client buildS3Client(S3Config s3Config) throws URISyntaxException {
